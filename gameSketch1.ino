@@ -41,20 +41,10 @@ int melody1[MEL1_SIZE] = {
   NOTE_C3, NOTE_E3, NOTE_G3, NOTE_G3, NOTE_C4};
 int melody2[MEL2_SIZE] = {
   NOTE_C3, NOTE_DS3, NOTE_G3, NOTE_G3, NOTE_C4};
-int melodyCountdown[3] = {
-  NOTE_G2, NOTE_G2, NOTE_C3};
-int melodyStartup[4] = {
-  NOTE_G2, NOTE_G2, NOTE_E3, NOTE_E4};
 
 //var arr for durations
-int noteDurations1[MEL1_SIZE] = {
-  4, 4, 4, 4, 4};
-int noteDurations2[MEL2_SIZE] = {
-  4, 4, 4, 4, 4};
-int noteDurationsCountdown[3] = {
-  4, 4, 4};
-int noteDurationsStartup[4] = {
-  8, 8, 4, 4};
+int noteDurations1[MEL1_SIZE] = {4, 4, 4, 4, 4};
+int noteDurations2[MEL2_SIZE] = {4, 4, 4, 4, 4};
 
 void setup() {
 
@@ -85,15 +75,12 @@ void setup() {
   pinMode(AUDIO_OUT, OUTPUT); 
 
   //enable interrupt for end-of-game - 0 = (pin 2)
-  attachInterrupt(0, intFuncTop1, RISING);
-  attachInterrupt(1, intFuncTop2, RISING);
+  attachInterrupt(0, intFuncTop1, FALLING);
+  attachInterrupt(1, intFuncTop2, FALLING);
 
   if (debugging) {
     Serial.begin(9600);  // i can haz serial plz?
   }
-
-  //Start tones
-  playMusic(melodyStartup, noteDurationsStartup, 4);
 
   activeWait();
 }
@@ -115,15 +102,13 @@ void activeWait() {
     //if start button on, set game start and enable lasers
     if (HIGH != startButtonState) {
       gameStart = true;
-      playMusic(melodyCountdown, noteDurationsCountdown, 3);
       digitalWrite(ENABLE_LASERS_OUT, HIGH);
 
       //DEBUG
       if (debugging) {
         Serial.println("Starting game");
       }
-    } 
-    else {
+    } else {
       //else blink
       digitalWrite(START_BLINK_OUT, HIGH);
       delay(3000);
@@ -139,7 +124,7 @@ void loop() {
   if (debugging) {
     Serial.println("loop() entered");
   }
-
+  
   while (gameStart) {
     //read from photo inputs
     int photo1State = analogRead(PHOTO1_IN);
@@ -189,7 +174,7 @@ void loop() {
       analogWrite(MOTOR2_1_OUT, LOW);
     }
   }
-
+  
   //If we're no longer in the gameStart loop, go back to waiting.
   //Waiting will return here, which loops back up
   activeWait();
@@ -214,7 +199,7 @@ void intFuncTop1() {
   digitalWrite(LIGHT1_OUT, HIGH);
 
   //Play shiny music
-  playMusic(melody1, noteDurations1, MEL1_SIZE);
+  playMusic(1);
 
   //Send both players back to bottom    
   returnToHome();
@@ -245,7 +230,7 @@ void intFuncTop2() {
   digitalWrite(LIGHT2_OUT, HIGH);
 
   //Play shiny music
-  playMusic(melody2, noteDurations2, MEL2_SIZE);
+  playMusic(2);
 
   //Send both players back to bottom    
   returnToHome();
@@ -310,23 +295,42 @@ void returnToHome() {
 
 }
 
-void playMusic(int notes[], int durations[], int melSize) {
-  // iterate over the notes of the melody:
-  for (int thisNote = 0; thisNote < melSize; thisNote++) {
+void playMusic(int player) {
+  if (1 == player) {
+    // iterate over the notes of the melody:
+    for (int thisNote = 0; thisNote < MEL1_SIZE; thisNote++) {
 
-    // to calculate the note duration, take one second 
-    // divided by the note type.
-    //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-    int noteDuration = 1000/durations[thisNote];
-    tone(8, notes[thisNote],noteDuration);
+      // to calculate the note duration, take one second 
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = 1000/noteDurations1[thisNote];
+      tone(8, melody1[thisNote],noteDuration);
 
-    // to distinguish the notes, set a minimum time between them.
-    // the note's duration + 30% seems to work well:
-    int pauseBetweenNotes = noteDuration * 1.30;
-    delay(pauseBetweenNotes);
-    // stop the tone playing:
-    noTone(8);
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+      // stop the tone playing:
+      noTone(8);
+    }
+  } 
+  else if (2 == player) {
+    // iterate over the notes of the melody:
+    for (int thisNote = 0; thisNote < MEL2_SIZE; thisNote++) {
+
+      // to calculate the note duration, take one second 
+      // divided by the note type.
+      //e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+      int noteDuration = 1000/noteDurations2[thisNote];
+      tone(8, melody1[thisNote],noteDuration);
+
+      // to distinguish the notes, set a minimum time between them.
+      // the note's duration + 30% seems to work well:
+      int pauseBetweenNotes = noteDuration * 1.30;
+      delay(pauseBetweenNotes);
+      // stop the tone playing:
+      noTone(8);
+    }
   }
-} 
-
+}
 
